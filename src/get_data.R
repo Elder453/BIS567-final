@@ -128,6 +128,6 @@ mean(ny$stud_enrollment) + 3*sd(ny$stud_enrollment)
   # indicator variable for 2013 (common core adoption)
 
 # Save data as CSV
-#write.csv(ny, file = "final_data.csv")
+#save(ny, file = "final_data.rdata")
 
 
