@@ -9,13 +9,16 @@
 ################################
 # 0 - Load libraries
 ################################
+
 library(educationdata)
 library(tidyverse)
+
 
 ################################
 # 1 - Query API endpoints
 ################################
-# Note: 
+
+# Notes: 
 #   - fips = 36 corresponds to NY
 #   - grade_edfacts = 9 corresponds to grades 9-12
 #   - school_level = 3 corresponds to High school
@@ -23,38 +26,38 @@ library(tidyverse)
 FIPS = 36 # New York
 
 # math midpoint proficiency
-ct_math <- get_education_data(level = "schools", 
+ny_math <- get_education_data(level = "schools", 
                               source = "edfacts",
                               topic = "assessments",
                               filters = list(grade_edfacts = 9,
                                              fips = FIPS))
-ct_math <- ct_math %>% select(ncessch, year, math_test_pct_prof_midpt)
+ny_math <- ny_math %>% select(ncessch, year, math_test_pct_prof_midpt)
 
 # title i eligibility
-ct_title_i <- get_education_data(level = "schools", 
+ny_title_i <- get_education_data(level = "schools", 
                                  source = "ccd",
                                  topic = "directory",
                                  filters = list(school_level = 3,
                                                 fips = FIPS))  
-ct_title_i <- ct_title_i %>% select(ncessch, year, title_i_eligible)
+ny_title_i <- ny_title_i %>% select(ncessch, year, title_i_eligible)
 
 # number of FT teachers
-ct_num_teachers <- get_education_data(level = "schools",
+ny_num_teachers <- get_education_data(level = "schools",
                                        source = "crdc",
                                        topic = "teachers-staff",
                                        filters = list(fips = FIPS))
-ct_num_teachers <- ct_num_teachers %>% 
+ny_num_teachers <- ny_num_teachers %>% 
                     select(ncessch, year, teachers_fte_crdc) %>% 
                     mutate(teachers_fte_crdc = as.integer(teachers_fte_crdc))
 
 # student enrollment
-ct_enrollment <- get_education_data(level = "schools",
+ny_enrollment <- get_education_data(level = "schools",
                                     source = "ccd",
                                     topic = "enrollment",
                                     filters = list(fips = FIPS,
                                                    year = 2008:2021,
                                                    grade = 9:12))
-ct_enrollment <- ct_enrollment %>%
+ny_enrollment <- ny_enrollment %>%
                   group_by(year, ncessch) %>%
                   summarize(stud_enrollment = sum(enrollment)) %>% 
                   arrange(ncessch) %>%
@@ -72,15 +75,16 @@ geo <- geo %>%
         mutate(county = as.factor(county_code)) %>%
         select(ncessch, longitude, latitude, county)
 
+
 ################################
-# 2 - Clean & Build dataset
+# 2 - Clean & build dataset
 ################################
 
-temp <- ct_math %>%
+temp <- ny_math %>%
       arrange(ncessch) %>%
-      left_join(ct_title_i, by = c("ncessch", "year")) %>%
-      left_join(ct_num_teachers, by = c("ncessch", "year")) %>%
-      left_join(ct_enrollment, by = c("ncessch", "year")) %>%
+      left_join(ny_title_i, by = c("ncessch", "year")) %>%
+      left_join(ny_num_teachers, by = c("ncessch", "year")) %>%
+      left_join(ny_enrollment, by = c("ncessch", "year")) %>%
       left_join(geo, by = c("ncessch")) %>%
       mutate(ncessch = as.factor(ncessch))
 
@@ -139,65 +143,18 @@ hist(ny$logit_math_midpt)
 # 2013: NY state adopts tougher benchmarks for proficiency (adjusting to Common Core) --> 2013 has huge declines in relate to 2012 but recovers 2014
   # indicator variable for 2013 (common core adoption)
 
-# Save data as CSV
-save(ny, file = "final_data.rdata")
+
+################################
+# 3 - Save final dataset
+################################
+
+save(ny, file = "data/final_data.RData")
 
 
 
-
-
-# Ensure that 'ncessch' and 'county' are factors
-ny$ncessch <- as.factor(ny$ncessch)
-ny$county <- as.factor(ny$county)
-
-# Get the number of unique 'ncessch' and 'county'
-num_ncessch <- length(unique(ny$ncessch))
-num_county <- length(unique(ny$county))
-
-# Create a matrix of zeros with the correct dimensions
-matrix_ncessch_county <- matrix(0, nrow = num_ncessch, ncol = num_county)
-
-# Name the rows and columns of the matrix
-rownames(matrix_ncessch_county) <- sort(unique(ny$ncessch))
-colnames(matrix_ncessch_county) <- sort(unique(ny$county))
-
-# Populate the matrix
-for (i in 1:nrow(ny)) {
-  ncessch_index <- which(rownames(matrix_ncessch_county) == ny$ncessch[i])
-  county_index <- which(colnames(matrix_ncessch_county) == ny$county[i])
-  matrix_ncessch_county[ncessch_index, county_index] <- 1
-}
-
-# The matrix is now ready
-matrix_ncessch_county
-
-
-
-
-# Get the number of observations and the number of unique 'ncessch'
-num_observations <- nrow(ny)
-num_ncessch <- length(levels(ny$ncessch))
-
-# Create a matrix of zeros with the correct dimensions
-indicator_matrix <- matrix(0, nrow = num_observations, ncol = num_ncessch)
-
-# Name the cols of the matrix after each unique 'ncessch'
-colnames(indicator_matrix) <- levels(ny$ncessch)
-
-# Populate the matrix
-for (i in 1:num_observations) {
-  ncessch_value <- ny$ncessch[i]
-  column_index <- which(colnames(indicator_matrix) == ncessch_value)
-  indicator_matrix[i, column_index] <- 1
-}
-
-indicator_matrix
-
-
-
-
-
-
+######################################
+# Miscellaneous notes - DELETE LATER
+######################################
 
 # ST.CARanova()
 # ranodm effect that is time (county-specific), learns about space and time separately (can turn off interaction term) 
