@@ -31,7 +31,7 @@ ny_math <- get_education_data(level = "schools",
                               topic = "assessments",
                               filters = list(grade_edfacts = 9,
                                              fips = FIPS,
-                                             year = 2011:2017,))
+                                             year = 2011:2017))
 ny_math <- ny_math %>% select(ncessch, year, math_test_pct_prof_midpt)
 
 # title i eligibility
@@ -40,7 +40,7 @@ ny_title_i <- get_education_data(level = "schools",
                                  topic = "directory",
                                  filters = list(school_level = 3,
                                                 fips = FIPS,
-                                                year = 2011:2017,))  
+                                                year = 2011:2017))  
 ny_title_i <- ny_title_i %>% select(ncessch, year, title_i_eligible)
 
 # number of FT teachers
@@ -48,7 +48,7 @@ ny_num_teachers <- get_education_data(level = "schools",
                                        source = "crdc",
                                        topic = "teachers-staff",
                                        filters = list(fips = FIPS,
-                                                      year = 2011:2017,))
+                                                      year = seq(2011,2017, 2)))
 ny_num_teachers <- ny_num_teachers %>% 
                     select(ncessch, year, teachers_fte_crdc) %>% 
                     mutate(teachers_fte_crdc = as.integer(teachers_fte_crdc))
@@ -130,20 +130,22 @@ ny <- temp %>%
                                               NA_real_)) %>%
       arrange(ncessch)
 
+ny <- ny %>%
+      group_by(ncessch) %>%
+      filter(all(2011:2017 %in% year)) %>%
+      ungroup()
+
 # logit transform response 
 ny$logit_math_midpt <- log( (ny$math_test_pct_prof_midpt/100) / (1 - ny$math_test_pct_prof_midpt/100) )
-hist(ny$logit_math_midpt)
 
 # 2013: NY state adopts tougher benchmarks for proficiency (adjusting to Common Core) --> 2013 has huge declines in relate to 2012 but recovers 2014
   # indicator variable for 2013 (common core adoption)
-
 
 ################################
 # 3 - Save final dataset
 ################################
 
 save(ny, file = "data/final_data.RData")
-
 
 
 ######################################
@@ -154,7 +156,8 @@ save(ny, file = "data/final_data.RData")
 # ranodm effect that is time (county-specific), learns about space and time separately (can turn off interaction term) 
 # replication --> multi-level version: multivariate: k = county, t= time, j = school;
 # MVST.CARar()
-# AR1 at each time point there's specific set of effects (e.g. counties); vectors subjected to auto reg structure; in anova there's one static set of spatial and temporal paramteters. 
+# AR1 at each time point there's specific set of effects (e.g. counties); vectors subjected to auto reg structure; 
+# in anova there's one static set of spatial and temporal paramteters. 
 # hard to learn correlation over time; won't be able to learn about rho t (pg 15); year effect
 # ignore time --> dummy for vars
 
