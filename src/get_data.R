@@ -30,7 +30,8 @@ ny_math <- get_education_data(level = "schools",
                               source = "edfacts",
                               topic = "assessments",
                               filters = list(grade_edfacts = 9,
-                                             fips = FIPS))
+                                             fips = FIPS,
+                                             year = 2011:2017,))
 ny_math <- ny_math %>% select(ncessch, year, math_test_pct_prof_midpt)
 
 # title i eligibility
@@ -38,14 +39,16 @@ ny_title_i <- get_education_data(level = "schools",
                                  source = "ccd",
                                  topic = "directory",
                                  filters = list(school_level = 3,
-                                                fips = FIPS))  
+                                                fips = FIPS,
+                                                year = 2011:2017,))  
 ny_title_i <- ny_title_i %>% select(ncessch, year, title_i_eligible)
 
 # number of FT teachers
 ny_num_teachers <- get_education_data(level = "schools",
                                        source = "crdc",
                                        topic = "teachers-staff",
-                                       filters = list(fips = FIPS))
+                                       filters = list(fips = FIPS,
+                                                      year = 2011:2017,))
 ny_num_teachers <- ny_num_teachers %>% 
                     select(ncessch, year, teachers_fte_crdc) %>% 
                     mutate(teachers_fte_crdc = as.integer(teachers_fte_crdc))
@@ -55,7 +58,7 @@ ny_enrollment <- get_education_data(level = "schools",
                                     source = "ccd",
                                     topic = "enrollment",
                                     filters = list(fips = FIPS,
-                                                   year = 2008:2021,
+                                                   year = 2011:2017,
                                                    grade = 9:12))
 ny_enrollment <- ny_enrollment %>%
                   group_by(year, ncessch) %>%
@@ -126,15 +129,6 @@ ny <- temp %>%
                                               stud_enrollment / teachers_fte_crdc, 
                                               NA_real_)) %>%
       arrange(ncessch)
-
-ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
-  geom_line() +
-  labs(title = "Math Test Proficiency Midpoint by Year and School",
-       x = "Year",
-       y = "Math Test Proficiency Midpoint",
-       color = "School ID") +
-  theme_minimal() + 
-  theme(legend.position = "none")
 
 # logit transform response 
 ny$logit_math_midpt <- log( (ny$math_test_pct_prof_midpt/100) / (1 - ny$math_test_pct_prof_midpt/100) )

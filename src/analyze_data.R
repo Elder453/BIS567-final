@@ -19,8 +19,9 @@ library(rjags)
 ################################
 
 # Load in data
-ny <- load("data/final_data.RData")
+load("data/final_data.RData")
 
+# CREATE indicator matrix for ncessch by county
 # Ensure that 'ncessch' and 'county' are factors
 ny$ncessch <- as.factor(ny$ncessch)
 ny$county <- as.factor(ny$county)
@@ -30,48 +31,54 @@ num_ncessch <- length(unique(ny$ncessch))
 num_county <- length(unique(ny$county))
 
 # Create a matrix of zeros with the correct dimensions
-matrix_ncessch_county <- matrix(0, nrow = num_ncessch, ncol = num_county)
+ncessch_county_matrix <- matrix(0, nrow = num_ncessch, ncol = num_county)
 
 # Name the rows and columns of the matrix
-rownames(matrix_ncessch_county) <- sort(unique(ny$ncessch))
-colnames(matrix_ncessch_county) <- sort(unique(ny$county))
+rownames(ncessch_county_matrix) <- sort(unique(ny$ncessch))
+colnames(ncessch_county_matrix) <- sort(unique(ny$county))
 
 # Populate the matrix
 for (i in 1:nrow(ny)) {
-  ncessch_index <- which(rownames(matrix_ncessch_county) == ny$ncessch[i])
-  county_index <- which(colnames(matrix_ncessch_county) == ny$county[i])
-  matrix_ncessch_county[ncessch_index, county_index] <- 1
+  ncessch_index <- which(rownames(ncessch_county_matrix) == ny$ncessch[i])
+  county_index <- which(colnames(ncessch_county_matrix) == ny$county[i])
+  ncessch_county_matrix[ncessch_index, county_index] <- 1
 }
+ncessch_county_matrix
 
-# The matrix is now ready
-matrix_ncessch_county
-
-
-
-
-# Get the number of observations and the number of unique 'ncessch'
+# CREATE indicator matrix for ncessch by observation
 num_observations <- nrow(ny)
 num_ncessch <- length(levels(ny$ncessch))
 
 # Create a matrix of zeros with the correct dimensions
-indicator_matrix <- matrix(0, nrow = num_observations, ncol = num_ncessch)
+ncescch_indicator_matrix <- matrix(0, nrow = num_observations, ncol = num_ncessch)
 
 # Name the cols of the matrix after each unique 'ncessch'
-colnames(indicator_matrix) <- levels(ny$ncessch)
+colnames(ncescch_indicator_matrix) <- levels(ny$ncessch)
 
 # Populate the matrix
 for (i in 1:num_observations) {
   ncessch_value <- ny$ncessch[i]
-  column_index <- which(colnames(indicator_matrix) == ncessch_value)
-  indicator_matrix[i, column_index] <- 1
+  column_index <- which(colnames(ncescch_indicator_matrix) == ncessch_value)
+  ncescch_indicator_matrix[i, column_index] <- 1
 }
+ncescch_indicator_matrix 
 
-indicator_matrix
+# PLOT math proficiency over time
+ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
+  geom_line() +
+  labs(title = "Math Test Proficiency Midpoint by Year and School",
+       x = "Year",
+       y = "Math Test Proficiency Midpoint",
+       color = "School ID") +
+  theme_minimal() + 
+  theme(legend.position = "none")
 
 
 ################################
 # 2 - Formulate model and MCMC
 ################################
+
+
 
 ################################
 # 3 - Convergence diagnostics
