@@ -13,6 +13,7 @@
 library(tidyverse)
 library(rjags)
 library(reshape2)
+library(coda)
 
 ################################
 # 1 - Pre-modeling preparation
@@ -78,39 +79,38 @@ for (school in unique(ny_jags$school_index)) {
 ################################
 
 model_string <- "model {
-  # Likelihood
-  for (i in 1:N_schools) {
-    for (t in 1:N_years) {
-      Y[i, t] ~ dnorm(mu[i, t], tau)
-      mu[i, t] <- inprod(X[i, t,], beta) + alpha[i] + phi[county[i]]
-    }
-  }
-  
-  # Priors for fixed effects beta
+  # Priors
   for (j in 1:N_beta) {
     beta[j] ~ dnorm(0, 0.0001)
   }
   
-  # Random effects for schools
-  for (s in 1:N_schools) {
-    alpha[s] ~ dmnorm(alpha_zero[], cov_alpha[ , ])
-    alpha_zero[s] <- 0  # Mean zero for multivariate normal
+  tau2_alpha ~ dgamma(0.01, 0.01)
+  tau2_phi ~ dgamma(0.01, 0.01)
+  tau2 ~ dgamma(0.01, 0.01)
+
+  # simulate Inverse Gamma
+  sigma2_alpha <- 1 / tau2_alpha
+  sigma2_phi <- 1 / tau2_phi
+  sigma2 <- 1 / tau2
+  
+  # Random effects
+  for (i in 1:N_schools) {
+    alpha[i] ~ dnorm(0, sigma2_alpha) # school random effect
   }
   
-  # Random effects for counties
-  for (c in 1:N_counties) {
-    phi[c] ~ dmnorm(phi_zero[], cov_phi[ , ])
-    phi_zero[c] <- 0  # Mean zero for multivariate normal
+  for (j in 1:N_counties) {
+    phi[j] ~ dnorm(0, sigma2_phi)     # county random effect
   }
   
-  # Covariance matrices and their hyperpriors
-  cov_alpha[1:N_schools, 1:N_schools] ~ dwish(W_alpha[,], df_alpha)
-  cov_phi[1:N_counties, 1:N_counties] ~ dwish(W_phi[,], df_phi)
-  
-  # Precision parameter tau and its prior
-  tau ~ dgamma(a_tau, b_tau)
-  sigma2 <- 1 / tau  # Variance
+  # Likelihood
+  for (i in 1:N_schools) {
+    for (t in 1:N_years) {
+      mu[i, t] <- inprod(X[i, t, ], beta) + alpha[school[i]] + phi[county[i]]
+      Y[i, t] ~ dnorm(mu[i, t], sigma2)       # normal likelihood
+    }
+  }
 }"
+
 
 
 jags_data_list <- list(
@@ -121,32 +121,33 @@ jags_data_list <- list(
   N_counties = N_counties,
   N_years = N_years,
   N_beta = 3,  # Number of fixed effect predictors
-  a_tau = 0.01,  # ADJUST based on assumptions
-  b_tau = 0.01,  # ADJUST based on assumptions
-  W_alpha = diag(rep(1, N_schools)),
-  W_phi = diag(rep(1, N_counties)), 
-  df_alpha = N_schools + 1,
-  df_phi = N_counties + 1
+  school = ny_jags$school_index
 )
 
 initial_values <- list(
   beta = rnorm(3, 0, 0.01),  # Assuming 3 fixed effects: year, title_i_eligible, and student_teacher_ratio
   alpha = rep(0, N_schools),
   phi = rep(0, N_counties),
-  cov_alpha = diag(1, N_schools),
-  cov_phi = diag(1, N_counties),
-  tau = 1
+  tau2_alpha = 1, 
+  tau2_phi = 1, 
+  tau2 = 1
 )
 
 jags_model <- jags.model(textConnection(model_string), data = jags_data_list, inits = initial_values, n.chains = 3)
 
-results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", "phi", "cov_alpha", "cov_phi", "sigma2"), n.iter = 10000)
+results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), n.iter = 10000)
 
 
 
 ################################
 # 3 - Convergence diagnostics
 ################################
+
+traceplot(results)
+autocorr.plot(results[,200])
+
+acf_results <- autocorr.diag(results)
+
 
 ################################
 # 4 - Compare models
