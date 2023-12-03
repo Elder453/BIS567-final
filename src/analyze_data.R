@@ -14,6 +14,7 @@ library(tidyverse)
 library(rjags)
 library(reshape2)
 library(coda)
+library(readr)
 
 ################################
 # 1 - Pre-modeling preparation
@@ -37,7 +38,7 @@ set.seed(567)
 #   theme(legend.position = "none")
 
 
-# create indices for schools, counties, years
+# Create indices for schools, counties, years
 unique_ids <- unique(ny$ncessch)
 id_mapping <- setNames(seq_along(unique_ids), unique_ids)
 ny$school_index <- rep(NA,nrow(ny))
@@ -85,41 +86,12 @@ for (school in unique(ny_jags$school_index)) {
 # 2 - Formulate model and MCMC
 ################################
 
-model_string <- "model {
-  # Priors
-  for (j in 1:N_beta) {
-    beta[j] ~ dnorm(0, 0.0001)
-  }
-  
-  tau2_alpha ~ dgamma(0.01, 0.01)
-  tau2_phi ~ dgamma(0.01, 0.01)
-  tau2 ~ dgamma(0.01, 0.01)
+# Read in model strings
+model_string_base <- read_file("models/base_lm.txt")
+model_string_mixed_1 <- read_file("models/mixed_with_school.txt")
+model_string_mixed_2 <- read_file("models/mixed_with_school_and_county.txt")
 
-  # simulate Inverse Gamma
-  sigma2_alpha <- 1 / tau2_alpha
-  sigma2_phi <- 1 / tau2_phi
-  sigma2 <- 1 / tau2
-  
-  # Random effects
-  for (i in 1:N_schools) {
-    alpha[i] ~ dnorm(0, sigma2_alpha) # school random effect
-  }
-  
-  for (j in 1:N_counties) {
-    phi[j] ~ dnorm(0, sigma2_phi)     # county random effect
-  }
-  
-  # Likelihood
-  for (i in 1:N_schools) {
-    for (t in 1:N_years) {
-      mu[i, t] <- inprod(X[i, t, ], beta) + alpha[school[i]] + phi[county[i]]
-      Y[i, t] ~ dnorm(mu[i, t], sigma2)       # normal likelihood
-    }
-  }
-}"
-
-
-
+# Initialize data list and initial values
 jags_data_list <- list(
   Y = Y_matrix,
   X = X_array,
@@ -140,9 +112,30 @@ initial_values <- list(
   tau2 = 1
 )
 
-jags_model <- jags.model(textConnection(model_string), data = jags_data_list, inits = initial_values, n.chains = 3)
+# Initialize models
+model_base <- jags.model(textConnection(model_string_base), 
+                         data = jags_data_list, 
+                         inits = initial_values, 
+                         n.chains = 3)
+model_mixed_1 <- jags.model(textConnection(model_string_mixed_1), 
+                            data = jags_data_list, 
+                            inits = initial_values, 
+                            n.chains = 3)
+model_mixed_2 <- jags.model(textConnection(model_string_mixed_school_2), 
+                            data = jags_data_list, 
+                            inits = initial_values, 
+                            n.chains = 3)
 
-results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), n.iter = 10000)
+# Run MCMC and store results
+results_base <- coda.samples(model = model_base, 
+                             variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                             n.iter = 10000)
+results_mixed_1 <- coda.samples(model = model_mixed_1, 
+                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                                n.iter = 10000)
+results_mixed_2 <- coda.samples(model = model_mixed_2, 
+                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                                n.iter = 10000)
 
 
 
@@ -150,10 +143,10 @@ results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", 
 # 3 - Convergence diagnostics
 ################################
 
-traceplot(results)
-autocorr.plot(results[,200])
+# traceplot(results)
+# autocorr.plot(results[,200])
 
-acf_results <- autocorr.diag(results)
+# acf_results <- autocorr.diag(results)
 
 
 ################################
