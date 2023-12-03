@@ -142,18 +142,23 @@ initial_values <- list(
 
 jags_model <- jags.model(textConnection(model_string), data = jags_data_list, inits = initial_values, n.chains = 3)
 
-results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), n.iter = 10000)
+results <- coda.samples(model = jags_model, variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), n.iter = 1000000)
 
-
+save(results, file = "data/model_results.RData")
 
 ################################
 # 3 - Convergence diagnostics
 ################################
 
-traceplot(results)
-autocorr.plot(results[,200])
-
-acf_results <- autocorr.diag(results)
+traceplot(results[, "beta[9]", drop=FALSE]) # student_teacher_ratio - bad
+traceplot(results[, "beta[8]", drop=FALSE]) # title_i_eligible - bad
+traceplot(results[, "beta[7]", drop=FALSE]) #2017 - good
+traceplot(results[, "beta[6]", drop=FALSE]) #2016 - good
+traceplot(results[, "beta[5]", drop=FALSE]) #2015 - good
+traceplot(results[, "beta[4]", drop=FALSE]) #2014 - good
+traceplot(results[, "beta[3]", drop=FALSE]) #2013 - bad
+traceplot(results[, "beta[2]", drop=FALSE]) #2012 - bad
+traceplot(results[, "beta[1]", drop=FALSE]) #2011 - bad
 
 
 ################################
