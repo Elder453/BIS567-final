@@ -109,7 +109,7 @@ initial_values <- list(
   phi = rep(0, N_counties),
   tau2_alpha = 1, 
   tau2_phi = 1, 
-  tau2 = 1
+  tau2_epsilon = 1
 )
 
 # Initialize models
@@ -128,13 +128,13 @@ model_mixed_2 <- jags.model(textConnection(model_string_mixed_school_2),
 
 # Run MCMC and store results
 results_base <- coda.samples(model = model_base, 
-                             variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                             variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2_epsilon"), 
                              n.iter = 10000)
 results_mixed_1 <- coda.samples(model = model_mixed_1, 
-                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2_epsilon"), 
                                 n.iter = 10000)
 results_mixed_2 <- coda.samples(model = model_mixed_2, 
-                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2"), 
+                                variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2_epsilon"), 
                                 n.iter = 10000)
 
 
