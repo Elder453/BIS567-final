@@ -126,6 +126,7 @@ model_mixed_2 <- jags.model(textConnection(model_string_mixed_school_2),
                             inits = initial_values, 
                             n.chains = 3)
 
+
 # Run MCMC and store results
 results_base <- coda.samples(model = model_base, 
                              variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2_epsilon"), 
@@ -137,16 +138,30 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
                                 variable.names = c("beta", "alpha", "phi", "sigma2_alpha", "sigma2_phi", "sigma2_epsilon"), 
                                 n.iter = 10000)
 
-
+save(results_base, file = "data/results_base.RData")
+save(results_mixed_1, file = "data/results_mixed_1.RData")
+save(results_mixed_2, file = "data/results_mixed_2.RData")
 
 ################################
 # 3 - Convergence diagnostics
 ################################
 
+
+traceplot(results[, "beta[9]", drop=FALSE]) # student_teacher_ratio - bad
+traceplot(results[, "beta[8]", drop=FALSE]) # title_i_eligible - bad
+traceplot(results[, "beta[7]", drop=FALSE]) #2017 - good
+traceplot(results[, "beta[6]", drop=FALSE]) #2016 - good
+traceplot(results[, "beta[5]", drop=FALSE]) #2015 - good
+traceplot(results[, "beta[4]", drop=FALSE]) #2014 - good
+traceplot(results[, "beta[3]", drop=FALSE]) #2013 - bad
+traceplot(results[, "beta[2]", drop=FALSE]) #2012 - bad
+traceplot(results[, "beta[1]", drop=FALSE]) #2011 - bad
+
 # traceplot(results)
 # autocorr.plot(results[,200])
 
 # acf_results <- autocorr.diag(results)
+
 
 
 ################################
