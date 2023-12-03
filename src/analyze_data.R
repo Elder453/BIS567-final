@@ -56,23 +56,30 @@ Y_matrix <- as.matrix(dcast(ny, school_index ~ year, value.var = "logit_math_mid
 
 N_schools <- length(unique(ny_jags$school_index))
 N_years <- length(unique(ny_jags$year))
-N_predictors <- 3  # year, title_i_eligible, and student_teacher_ratio
 N_counties <- length(unique(ny_jags$county_index))
 
-# Reshape X
+# One-hot encoding for years
+for (year in unique(ny_jags$year)) {
+  ny_jags[paste("year", year, sep = "_")] <- ifelse(ny_jags$year == year, 1, 0)
+}
+
+N_predictors <- 2 + N_years # title_i_eligible, student_teacher_ratio, and years
+
+# Update X_array dimensions
 X_array <- array(dim = c(N_schools, N_years, N_predictors))
 
-# Fill the array
+# Fill the array with new predictors
 for (school in unique(ny_jags$school_index)) {
   for (year in unique(ny_jags$year_index)) {
     school_rows <- ny_jags[ny_jags$school_index == school & ny_jags$year_index == year, ]
     if (nrow(school_rows) > 0) {
-      X_array[school, year, 1] <- school_rows[["year"]]
-      X_array[school, year, 2] <- school_rows[["title_i_eligible"]]
-      X_array[school, year, 3] <- school_rows[["student_teacher_ratio"]]
+      X_array[school, year, 1:N_years] <- as.numeric(school_rows[3:(2+N_years)]) # One-hot encoded years
+      X_array[school, year, (N_years+1)] <- school_rows[["title_i_eligible"]]
+      X_array[school, year, (N_years+2)] <- school_rows[["student_teacher_ratio"]]
     }
   }
 }
+
 
 ################################
 # 2 - Formulate model and MCMC
@@ -120,12 +127,12 @@ jags_data_list <- list(
   N_schools = N_schools,
   N_counties = N_counties,
   N_years = N_years,
-  N_beta = 3,  # Number of fixed effect predictors
+  N_beta = N_predictors, 
   school = ny_jags$school_index
 )
 
 initial_values <- list(
-  beta = rnorm(3, 0, 0.01),  # Assuming 3 fixed effects: year, title_i_eligible, and student_teacher_ratio
+  beta = rnorm(N_predictors, 0, 0.01),  # Assuming 3 fixed effects: year, title_i_eligible, and student_teacher_ratio
   alpha = rep(0, N_schools),
   phi = rep(0, N_counties),
   tau2_alpha = 1, 
