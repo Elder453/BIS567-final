@@ -64,10 +64,15 @@ N_counties <- length(unique(ny_jags$county_index))
 
 # One-hot encoding for years
 for (year in unique(ny_jags$year)) {
-  ny_jags[paste("year", year, sep = "_")] <- ifelse(ny_jags$year == year, 1, 0)
+  if (year != 2011) {  # Excluding the reference year
+    ny_jags[paste("year", year, sep = "_")] <- ifelse(ny_jags$year == year, 1, 0)
+  }
 }
 
-N_predictors <- 2 + N_years # title_i_eligible, student_teacher_ratio, and years
+year_cols <- grep("year_20", names(ny_jags), value = TRUE)
+year_cols <- year_cols[year_cols != "year_2011"]  # Exclude the reference year
+
+N_predictors <- 2 + N_years - 1# title_i_eligible, student_teacher_ratio, and years
 
 # Update X_array dimensions
 X_array <- array(dim = c(N_schools, N_years, N_predictors))
@@ -77,9 +82,9 @@ for (school in unique(ny_jags$school_index)) {
   for (year in unique(ny_jags$year_index)) {
     school_rows <- ny_jags[ny_jags$school_index == school & ny_jags$year_index == year, ]
     if (nrow(school_rows) > 0) {
-      X_array[school, year, 1:N_years] <- as.numeric(school_rows[3:(2+N_years)]) # One-hot encoded years
-      X_array[school, year, (N_years+1)] <- school_rows[["title_i_eligible"]]
-      X_array[school, year, (N_years+2)] <- school_rows[["student_teacher_ratio"]]
+      X_array[school, year, 1:(N_years - 1)] <- as.numeric(school_rows[year_cols]) # One-hot encoded years
+      X_array[school, year, ((N_years-1)+1)] <- school_rows[["title_i_eligible"]]
+      X_array[school, year, ((N_years-1)+2)] <- school_rows[["student_teacher_ratio"]]
     }
   }
 }
@@ -101,7 +106,7 @@ jags_data_list <- list(
   county = ny_jags$county_index,
   N_schools = N_schools,
   N_counties = N_counties,
-  N_years = N_years,
+  N_years = N_years, # include reference year (2011)
   N_beta = N_predictors, 
   school = ny_jags$school_index
 )
@@ -132,49 +137,25 @@ model_mixed_2 <- jags.model(textConnection(model_string_mixed_2),
 
 # Run MCMC and store results
 results_base <- coda.samples(model = model_base, 
-                             variable.names = c("beta", "sigma2_epsilon"), 
+                             variable.names = c("beta"), 
                              n.iter = 10000)
+
 results_mixed_1 <- coda.samples(model = model_mixed_1, 
-                                variable.names = c("beta", "alpha", "sigma2_epsilon", "sigma2_alpha"), 
+                                variable.names = c("beta", "alpha"), 
                                 n.iter = 10000)
+
 results_mixed_2 <- coda.samples(model = model_mixed_2, 
-                                variable.names = c("beta", "alpha", "phi", "sigma2_epsilon", "sigma2_alpha", "sigma2_phi"), 
+                                variable.names = c("beta", "alpha", "phi"), 
                                 n.iter = 10000)
 
 # Save MCMC runs to local disk
-# save(results_base, file = "data/results_base.RData")
-# save(results_mixed_1, file = "data/results_mixed_1.RData")
-# save(results_mixed_2, file = "data/results_mixed_2.RData")
-
-################################
-# 3 - Convergence diagnostics
-################################
-
-# Load in saved MCMC runs
-# load("data/results_base.RData")
-# load("data/results_mixed_1.RData")
-# load("data/results_mixed_2.RData")
-
-
-# traceplot(results[, "beta[9]", drop=FALSE]) # student_teacher_ratio - bad
-# traceplot(results[, "beta[8]", drop=FALSE]) # title_i_eligible - bad
-# traceplot(results[, "beta[7]", drop=FALSE]) #2017 - good
-# traceplot(results[, "beta[6]", drop=FALSE]) #2016 - good
-# traceplot(results[, "beta[5]", drop=FALSE]) #2015 - good
-# traceplot(results[, "beta[4]", drop=FALSE]) #2014 - good
-# traceplot(results[, "beta[3]", drop=FALSE]) #2013 - bad
-# traceplot(results[, "beta[2]", drop=FALSE]) #2012 - bad
-# traceplot(results[, "beta[1]", drop=FALSE]) #2011 - bad
-
-# traceplot(results)
-# autocorr.plot(results[,200])
-
-# acf_results <- autocorr.diag(results)
-
+save(results_base, file = "data/results_base.RData")
+save(results_mixed_1, file = "data/results_mixed_1.RData")
+save(results_mixed_2, file = "data/results_mixed_2.RData")
 
 
 ################################
-# 4 - Compare models
+# 3 - DIC Analysis Comparison
 ################################
 
 # Compute DIC statistics
@@ -182,8 +163,17 @@ dic_stats_base <- dic.samples(model = model_base, n.iter = 10000, type = "pD")
 dic_stats_mixed_1 <- dic.samples(model = model_mixed_1, n.iter = 10000, type = "pD")
 dic_stats_mixed_2 <- dic.samples(model = model_mixed_2, n.iter = 10000, type = "pD")
 
-dic_stats_base
-dic_stats_mixed_1
-dic_stats_mixed_2
+# > dic_stats_base
+# Mean deviance:  20595 
+# penalty 8.968 
+# Penalized deviance: 20604
 
-  
+# > dic_stats_mixed_1
+# Mean deviance:  15519 
+# penalty 126.9 
+# Penalized deviance: 15646
+
+# > dic_stats_mixed_2
+# Mean deviance:  15517 
+# penalty 123.1 
+# Penalized deviance: 15640 

@@ -50,3 +50,8 @@ rsconnect/
 
 # DS_Store files
 .DS_Store
+
+# MCMC results (aka ridiculously large binary files)
+results_base.RData
+results_mixed_1.RData
+results_mixed_2.RData
