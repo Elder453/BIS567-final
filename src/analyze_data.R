@@ -52,6 +52,9 @@ ny$year_index <- as.numeric(as.factor(ny$year))
 # select relevant columns
 ny_jags <- ny[c("year", "logit_math_midpt", "title_i_eligible", "student_teacher_ratio", "school_index", "county_index", "year_index")]
 
+# Standardize continuous predictors
+ny_jags$student_teacher_ratio <- scale(ny$student_teacher_ratio)
+
 # Reshape Y to be matrix
 Y_matrix <- as.matrix(dcast(ny, school_index ~ year, value.var = "logit_math_midpt")[,-1])
 
@@ -138,6 +141,7 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
                                 variable.names = c("beta", "alpha", "phi", "sigma2_epsilon", "sigma2_alpha", "sigma2_phi"), 
                                 n.iter = 10000)
 
+# Save MCMC runs to local disk
 # save(results_base, file = "data/results_base.RData")
 # save(results_mixed_1, file = "data/results_mixed_1.RData")
 # save(results_mixed_2, file = "data/results_mixed_2.RData")
