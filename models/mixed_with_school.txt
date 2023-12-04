@@ -16,10 +16,6 @@ model {
     alpha[i] ~ dnorm(0, sigma2_alpha) # school random effect
   }
   
-  for (j in 1:N_counties) {
-    phi[j] ~ dnorm(0, sigma2_phi)     # county random effect
-  }
-  
   # Likelihood
   for (i in 1:N_schools) {
     for (t in 1:N_years) {

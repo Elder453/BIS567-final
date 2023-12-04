@@ -149,6 +149,7 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
                                 n.iter = 10000)
 
 # Save MCMC runs to local disk
+<<<<<<< HEAD:src/analyze_data.R
 # save(results_base, file = "data/results_base.RData")
 # save(results_mixed_1, file = "data/results_mixed_1.RData")
 # save(results_mixed_2, file = "data/results_mixed_2.RData")
@@ -181,6 +182,15 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
 
 ################################
 # 4 - Compare models
+=======
+save(results_base, file = "data/results_base.RData")
+save(results_mixed_1, file = "data/results_mixed_1.RData")
+save(results_mixed_2, file = "data/results_mixed_2.RData")
+
+
+################################
+# 3 - DIC Analysis Comparison
+>>>>>>> 650addd8501628bcb8717d46bac99c6d83f7135a:src/models_mcmc.R
 ################################
 
 # Compute DIC statistics
@@ -188,6 +198,23 @@ dic_stats_base <- dic.samples(model = model_base, n.iter = 10000, type = "pD")
 dic_stats_mixed_1 <- dic.samples(model = model_mixed_1, n.iter = 10000, type = "pD")
 dic_stats_mixed_2 <- dic.samples(model = model_mixed_2, n.iter = 10000, type = "pD")
 
+<<<<<<< HEAD:src/analyze_data.R
 dic_stats_base
 dic_stats_mixed_1
 dic_stats_mixed_2
+=======
+# > dic_stats_base
+# Mean deviance:  20595 
+# penalty 8.968 
+# Penalized deviance: 20604
+
+# > dic_stats_mixed_1
+# Mean deviance:  15519 
+# penalty 126.9 
+# Penalized deviance: 15646
+
+# > dic_stats_mixed_2
+# Mean deviance:  15517 
+# penalty 123.1 
+# Penalized deviance: 15640 
+>>>>>>> 650addd8501628bcb8717d46bac99c6d83f7135a:src/models_mcmc.R
