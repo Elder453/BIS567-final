@@ -164,5 +164,24 @@ save(ny, file = "data/final_data.RData")
 
 # shape file for counties to use carBayes
 
+# Stuyvesant: https://nces.ed.gov/ccd/schoolsearch/school_detail.asp?Search=1&InstName=Stuyvesant&SchoolType=1&SchoolType=2&SchoolType=3&SchoolType=4&SpecificSchlTypes=all&IncGrade=-1&LoGrade=-1&HiGrade=-1&ID=360007702877
+ny %>% filter(ncessch == 360007702877)
+
+# Amsterdam: https://nces.ed.gov/ccd/schoolsearch/school_detail.asp?Search=1&InstName=Amsterdam&State=36&SchoolType=1&SchoolType=2&SchoolType=3&SchoolType=4&SpecificSchlTypes=all&IncGrade=-1&LoGrade=-1&HiGrade=-1&ID=360297000068
+ny %>% filter(ncessch == 360297000068)
+
+# QUEENS SATELLITE HIGH SCHOOL FOR OPPORTUNITY : https://nces.ed.gov/ccd/schoolsearch/school_detail.asp?Search=1&SchoolID=360010006182&State=36&SchoolType=1&SchoolType=2&SchoolType=3&SchoolType=4&SpecificSchlTypes=all&IncGrade=-1&LoGrade=-1&HiGrade=-1&ID=360010006182
+ny %>% filter(ncessch == 360010006182)
 
 
+
+temp1 <- get_education_data(level = "schools", 
+                                 source = "ccd",
+                                 topic = "directory",
+                                 filters = list(school_level = 3,
+                                                fips = FIPS,
+                                                year = 2011:2017))  
+temp1 <- temp1 %>% select(ncessch, city_mailing)
+tmp <- ny %>% left_join(temp1)
+(tmp) %>% group_by(ncessch) %>% summarize(mean = mean(math_test_pct_prof_midpt),
+                                          city_mailing) %>% arrange(mean) %>% filter(city_mailing != "NEW YORK", city_mailing != "BRONX", city_mailing != "BROOKLYN") %>% unique() %>% print(n=100)

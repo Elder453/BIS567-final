@@ -149,48 +149,12 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
                                 n.iter = 10000)
 
 # Save MCMC runs to local disk
-<<<<<<< HEAD:src/analyze_data.R
-# save(results_base, file = "data/results_base.RData")
-# save(results_mixed_1, file = "data/results_mixed_1.RData")
-# save(results_mixed_2, file = "data/results_mixed_2.RData")
-
-################################
-# 3 - Convergence diagnostics
-################################
-
-# Load in saved MCMC runs
-# load("data/results_base.RData")
-# load("data/results_mixed_1.RData")
-# load("data/results_mixed_2.RData")
-
-
-# traceplot(results_base[, "beta[8]", drop=FALSE]) # student_teacher_ratio
-# traceplot(results_base[, "beta[7]", drop=FALSE]) # title_i_eligible
-# traceplot(results_base[, "beta[6]", drop=FALSE]) #2017 - good
-# traceplot(results_base[, "beta[5]", drop=FALSE]) #2016 - good
-# traceplot(results_base[, "beta[4]", drop=FALSE]) #2015 - good
-# traceplot(results_base[, "beta[3]", drop=FALSE]) #2014 - bad
-# traceplot(results_base[, "beta[2]", drop=FALSE]) #2013 - bad
-# traceplot(results_base[, "beta[1]", drop=FALSE]) #2012 - good
-
-# traceplot(results)
-# autocorr.plot(results[,200])
-
-# acf_results <- autocorr.diag(results)
-
-
-
-################################
-# 4 - Compare models
-=======
 save(results_base, file = "data/results_base.RData")
 save(results_mixed_1, file = "data/results_mixed_1.RData")
 save(results_mixed_2, file = "data/results_mixed_2.RData")
 
-
 ################################
-# 3 - DIC Analysis Comparison
->>>>>>> 650addd8501628bcb8717d46bac99c6d83f7135a:src/models_mcmc.R
+# 3 - DIC Model Comparisons
 ################################
 
 # Compute DIC statistics
@@ -198,11 +162,6 @@ dic_stats_base <- dic.samples(model = model_base, n.iter = 10000, type = "pD")
 dic_stats_mixed_1 <- dic.samples(model = model_mixed_1, n.iter = 10000, type = "pD")
 dic_stats_mixed_2 <- dic.samples(model = model_mixed_2, n.iter = 10000, type = "pD")
 
-<<<<<<< HEAD:src/analyze_data.R
-dic_stats_base
-dic_stats_mixed_1
-dic_stats_mixed_2
-=======
 # > dic_stats_base
 # Mean deviance:  20595 
 # penalty 8.968 
@@ -217,4 +176,3 @@ dic_stats_mixed_2
 # Mean deviance:  15517 
 # penalty 123.1 
 # Penalized deviance: 15640 
->>>>>>> 650addd8501628bcb8717d46bac99c6d83f7135a:src/models_mcmc.R
