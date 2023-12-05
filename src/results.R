@@ -106,10 +106,10 @@ effectiveSize(results_mixed_1[, fixed_effects, drop = FALSE])
 effectiveSize(results_mixed_2[, fixed_effects, drop = FALSE])
 
 
-# Geweke diagnostic scores, arbitrarily chose chain #1 (out of 3)
-geweke.diag(results_base[, fixed_effects, drop = FALSE])[1]
-geweke.diag(results_mixed_1[, fixed_effects, drop = FALSE])[1]
-geweke.diag(results_mixed_2[, fixed_effects, drop = FALSE])[1]
+# Gelman-Rubin diagnostic since we are using multiple chains
+gelman.diag(results_base[, fixed_effects, drop = FALSE])
+gelman.diag(results_mixed_1[, fixed_effects, drop = FALSE])
+gelman.diag(results_mixed_2[, fixed_effects, drop = FALSE])
 
 
 ################################
@@ -119,9 +119,35 @@ geweke.diag(results_mixed_2[, fixed_effects, drop = FALSE])[1]
 # TODO: choose which schools to show trace plots for
 # and compare distributions between the two mixed effects models
 
+# Note: there are 825 unique schools
+traceplot(results_mixed_2[, "alpha[42]", drop = FALSE])
+test <- sprintf("alpha[%d]", 401:600)
+
+# 6, 14, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 41, 48, 49, 55, 56, 57, 59, 61, 62, 69
+candidates <- c(6, 14, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 41, 48, 49, 55, 56, 57, 59, 61, 62, 69)
+school_indices <- c(360000800193, 360002101704, 360007600624, 360007603352, 360007603680, 360007605621, 360007700116
+,360007700585
+,360007700595
+,360007700637
+,360007700649
+,360007700691
+,360007700692
+,360007702871
+,360007705084
+,360007705085
+,360007705622
+,360007705624
+,360007705625
+,360007705764
+,360007705770
+,360007705771
+,360007805113)
 
 ################################
 # 2 - County random effects
 ################################
 
 # TODO: choose which counties to show trace plots for
+
+# Note: there are 61 unique counties
+
