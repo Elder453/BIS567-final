@@ -150,4 +150,3 @@ school_indices <- c(360000800193, 360002101704, 360007600624, 360007603352, 3600
 # TODO: choose which counties to show trace plots for
 
 # Note: there are 61 unique counties
-

@@ -28,14 +28,16 @@ set.seed(567)
 
 
 # # PLOT math proficiency over time
-# ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
-#   geom_line() +
-#   labs(title = "Math Test Proficiency Midpoint by Year and School",
-#        x = "Year",
-#        y = "Math Test Proficiency Midpoint",
-#        color = "School ID") +
-#   theme_minimal() + 
-#   theme(legend.position = "none")
+ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
+  geom_line() +
+  labs(caption = "*Each line represents a unique school",
+       x = "Year",
+       y = "Math Test Proficiency Midpoint",
+       color = "School ID") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 2011:2017) +
+  scale_y_continuous(breaks = seq(0, 100, 10)) +
+  theme(legend.position = "none")
 
 
 # Create indices for schools, counties, years
@@ -50,7 +52,13 @@ ny$county_index <- as.numeric(as.factor(ny$county))
 ny$year_index <- as.numeric(as.factor(ny$year))
 
 # select relevant columns
-ny_jags <- ny[c("year", "logit_math_midpt", "title_i_eligible", "student_teacher_ratio", "school_index", "county_index", "year_index")]
+ny_jags <- ny[c("year", 
+                "logit_math_midpt", 
+                "title_i_eligible", 
+                "student_teacher_ratio", 
+                "school_index", 
+                "county_index", 
+                "year_index")]
 
 # Standardize continuous predictors
 ny_jags$student_teacher_ratio <- scale(ny$student_teacher_ratio)
@@ -64,7 +72,7 @@ N_counties <- length(unique(ny_jags$county_index))
 
 # One-hot encoding for years
 for (year in unique(ny_jags$year)) {
-  if (year != 2011) {  # Excluding the reference year
+  if (year != 2011) {  # Exclude the reference year
     ny_jags[paste("year", year, sep = "_")] <- ifelse(ny_jags$year == year, 1, 0)
   }
 }
@@ -72,7 +80,7 @@ for (year in unique(ny_jags$year)) {
 year_cols <- grep("year_20", names(ny_jags), value = TRUE)
 year_cols <- year_cols[year_cols != "year_2011"]  # Exclude the reference year
 
-N_predictors <- 2 + N_years - 1# title_i_eligible, student_teacher_ratio, and years
+N_predictors <- 2 + N_years - 1 # title_i_eligible, student_teacher_ratio, and years
 
 # Update X_array dimensions
 X_array <- array(dim = c(N_schools, N_years, N_predictors))

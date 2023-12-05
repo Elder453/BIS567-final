@@ -181,7 +181,35 @@ temp1 <- get_education_data(level = "schools",
                                  filters = list(school_level = 3,
                                                 fips = FIPS,
                                                 year = 2011:2017))  
-temp1 <- temp1 %>% select(ncessch, city_mailing)
-tmp <- ny %>% left_join(temp1)
+temp1 <- temp1 %>% select(ncessch, school_name)
+
+school_indices <- c(360000800193, 
+                    360002101704, 
+                    360007600624, 
+                    360007603352, 
+                    360007603680, 
+                    360007605621, 
+                    360007700116,
+                    360007700585,
+                    360007700595,
+                    360007700637,
+                    360007700649,
+                    360007700691,
+                    360007700692,
+                    360007702871,
+                    360007705084,
+                    360007705085,
+                    360007705622,
+                    360007705624,
+                    360007705625,
+                    360007705764,
+                    360007705770,
+                    360007705771,
+                    360007805113)
+
+tmp <- temp1 %>% filter(ncessch %in% school_indices) %>% unique()
+
+ny %>% filter(ncessch == 360007605621)
+
 (tmp) %>% group_by(ncessch) %>% summarize(mean = mean(math_test_pct_prof_midpt),
                                           city_mailing) %>% arrange(mean) %>% filter(city_mailing != "NEW YORK", city_mailing != "BRONX", city_mailing != "BROOKLYN") %>% unique() %>% print(n=100)
