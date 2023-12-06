@@ -39,7 +39,7 @@ ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = 
   scale_y_continuous(breaks = seq(0, 100, 10)) +
   theme(legend.position = "none")
 
-
+ny_jags %>% group_by(county_index) %>% summarize(medianc = median(logit_math_midpt)) %>% print(n = 100)
 # Create indices for schools, counties, years
 unique_ids <- unique(ny$ncessch)
 id_mapping <- setNames(seq_along(unique_ids), unique_ids)
@@ -80,7 +80,7 @@ for (year in unique(ny_jags$year)) {
 year_cols <- grep("year_20", names(ny_jags), value = TRUE)
 year_cols <- year_cols[year_cols != "year_2011"]  # Exclude the reference year
 
-N_predictors <- 2 + N_years - 1 # title_i_eligible, student_teacher_ratio, and years
+N_predictors <- 2 + N_years - 1 + 1 # title_i_eligible, student_teacher_ratio, and years, and now Beta0
 
 # Update X_array dimensions
 X_array <- array(dim = c(N_schools, N_years, N_predictors))
@@ -96,7 +96,7 @@ for (school in unique(ny_jags$school_index)) {
     }
   }
 }
-
+X_array[,,9] <- 1 # intercept, meaning beta[3] is the intercept
 
 ################################
 # 2 - Formulate model and MCMC
@@ -106,6 +106,7 @@ for (school in unique(ny_jags$school_index)) {
 model_string_base <- read_file("models/base_lm.txt")
 model_string_mixed_1 <- read_file("models/mixed_with_school.txt")
 model_string_mixed_2 <- read_file("models/mixed_with_school_and_county.txt")
+model_string_mixed_3 <- read_file("models/mixed_with_county.txt")
 
 # Initialize data list and initial values
 jags_data_list <- list(
@@ -141,6 +142,10 @@ model_mixed_2 <- jags.model(textConnection(model_string_mixed_2),
                             data = jags_data_list, 
                             inits = initial_values, 
                             n.chains = 3)
+# model_mixed_3 <- jags.model(textConnection(model_string_mixed_3), 
+#                             data = jags_data_list, 
+#                             inits = initial_values, 
+#                             n.chains = 3)
 
 
 # Run MCMC and store results
@@ -156,10 +161,15 @@ results_mixed_2 <- coda.samples(model = model_mixed_2,
                                 variable.names = c("beta", "alpha", "phi"), 
                                 n.iter = 10000)
 
+# results_mixed_3 <- coda.samples(model = model_mixed_3, 
+#                                 variable.names = c("beta", "phi"), 
+#                                 n.iter = 10000)
+
 # Save MCMC runs to local disk
 save(results_base, file = "data/results_base.RData")
 save(results_mixed_1, file = "data/results_mixed_1.RData")
 save(results_mixed_2, file = "data/results_mixed_2.RData")
+# save(results_mixed_3, file = "data/results_mixed_3.RData")
 
 ################################
 # 3 - DIC Model Comparisons
