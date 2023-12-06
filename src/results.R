@@ -124,11 +124,8 @@ gelman.diag(results_mixed_2[, fixed_effects, drop = FALSE])
 # 1 - School random effects
 ################################
 
-# TODO: choose which schools to show trace plots for
-# and compare distributions between the two mixed effects models
-
 # Note: there are 825 unique schools
-combined_samples <- do.call(rbind, results_mixed_1)
+combined_samples <- do.call(rbind, results_mixed_2)
 
 # Prepare a matrix to store the quantiles and the indicator
 alpha_quantiles <- matrix(NA, nrow = 825, ncol = 4)
@@ -153,15 +150,21 @@ as.data.frame(alpha_quantiles) %>% filter(Zero == 0) %>% mutate(absmean = abs((u
 
 # BRONX COLLEGIATE ACADEMY (Bronx County): highest mean aphi
 ny %>% filter(ncessch == 360008605669)
-traceplot(results_mixed_1[, "alpha[111]", drop = FALSE], main = "")
+traceplot(results_mixed_2[, "alpha[111]", drop = FALSE])
+summary(results_mixed_2[, "alpha[111]", drop = FALSE])
+summary(results_mixed_1[, "alpha[111]", drop = FALSE]) # compare
 
 # MATTITUCK JUNIOR-SENIOR HIGH SCHOOL (Suffolk County): lowest mean aphi
 ny %>% filter(ncessch == 360002101704)
-traceplot(results_mixed_1[, "alpha[14]", drop = FALSE], main = "")
+traceplot(results_mixed_2[, "alpha[14]", drop = FALSE])
+summary(results_mixed_2[, "alpha[14]", drop = FALSE])
+summary(results_mixed_1[, "alpha[14]", drop = FALSE]) # compare
 
 # Stuyvesant (New York County): aphi = 0, recognizable school
 ny %>% filter(ncessch == 360007702877)
-traceplot(results_mixed_1[, "alpha[42]", drop = FALSE], main = "")
+traceplot(results_mixed_2[, "alpha[42]", drop = FALSE])
+summary(results_mixed_2[, "alpha[42]", drop = FALSE])
+summary(results_mixed_1[, "alpha[42]", drop = FALSE]) # compare
 
 
 ################################
