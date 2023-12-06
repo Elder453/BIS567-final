@@ -173,6 +173,7 @@ ny %>% filter(ncessch == 360297000068)
 # QUEENS SATELLITE HIGH SCHOOL FOR OPPORTUNITY : https://nces.ed.gov/ccd/schoolsearch/school_detail.asp?Search=1&SchoolID=360010006182&State=36&SchoolType=1&SchoolType=2&SchoolType=3&SchoolType=4&SpecificSchlTypes=all&IncGrade=-1&LoGrade=-1&HiGrade=-1&ID=360010006182
 ny %>% filter(ncessch == 360010006182)
 
+ny %>% filter(ncessch == 360009101928)
 
 
 temp1 <- get_education_data(level = "schools", 

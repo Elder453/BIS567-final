@@ -15,6 +15,7 @@ library(rjags)
 library(reshape2)
 library(coda)
 library(readr)
+library(RColorBrewer)
 
 ################################
 # 1 - Pre-modeling preparation
@@ -26,10 +27,18 @@ load("data/final_data.RData")
 # Set seed
 set.seed(567)
 
+# select random schools for graph
+n_random = 50
+random_schools <- sample(unique(ny$ncessch), n_random)
+ny_random <- ny %>% filter (ncessch %in% random_schools)
 
-# # PLOT math proficiency over time
-ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
+## PLOT math proficiency over time
+palette_colors <- brewer.pal(8, "Set2")
+extended_palette <- rep(palette_colors, length.out = n_random)
+
+ggplot(ny_random, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = as.factor(ncessch))) +
   geom_line() +
+  scale_color_manual(values = extended_palette) +
   labs(caption = "*Each line represents a unique school",
        x = "Year",
        y = "Math Test Proficiency Midpoint",
@@ -39,7 +48,10 @@ ggplot(ny, aes(x = year, y = math_test_pct_prof_midpt, group = ncessch, color = 
   scale_y_continuous(breaks = seq(0, 100, 10)) +
   theme(legend.position = "none")
 
-ny_jags %>% group_by(county_index) %>% summarize(medianc = median(logit_math_midpt)) %>% print(n = 100)
+display.brewer.all(type = "qual")  # Show all qualitative palettes
+
+
+
 # Create indices for schools, counties, years
 unique_ids <- unique(ny$ncessch)
 id_mapping <- setNames(seq_along(unique_ids), unique_ids)
@@ -181,16 +193,17 @@ dic_stats_mixed_1 <- dic.samples(model = model_mixed_1, n.iter = 10000, type = "
 dic_stats_mixed_2 <- dic.samples(model = model_mixed_2, n.iter = 10000, type = "pD")
 
 # > dic_stats_base
-# Mean deviance:  20595 
-# penalty 8.968 
-# Penalized deviance: 20604
+# Mean deviance:  17614 
+# penalty 10.06
+# Penalized deviance: 17624
 
 # > dic_stats_mixed_1
-# Mean deviance:  15519 
-# penalty 126.9 
-# Penalized deviance: 15646
+# Mean deviance:  15518 
+# penalty 123.2 
+# Penalized deviance: 15641
 
 # > dic_stats_mixed_2
 # Mean deviance:  15517 
-# penalty 123.1 
+# penalty 122.6
+# Penalized deviance: 15640
 # Penalized deviance: 15640 

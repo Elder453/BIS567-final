@@ -15,6 +15,8 @@ library(sf)
 library(ggplot2)
 library(sf)
 library(viridis)
+library(ggpattern)
+
 
 ################################
 # 1 - Preparing the data
@@ -24,8 +26,6 @@ all_states <- st_read("data/tl_2023_us_county.shp")
 
 # filter for NY counties
 ny_data <- all_states[all_states$STATEFP == 36, ]
-
-ny_data[ny_data$NAMELSAD == "Hamilton County",]
 
 # join phi values and county codes
 index = unique(as.numeric(as.factor(ny$county)))
@@ -37,9 +37,10 @@ for (i in 1:61) {
   county_data$phi_mean[i] = summary(results_mixed_2[, paste0("phi[", index[i], "]"), drop = FALSE])$statistics[1]
 }
 
-sum(county_data$county_code %in% ny_data$GEOID)
+county_data[62,] <- c(62, 36041, NA) # add Hamilton county, excluded from data
 merged_data <- merge(ny_data, county_data[-1], by.x = "GEOID", by.y = "county_code")
-merged_data$NAME
+
+
 ################################
 # 2 - Creating the heatmap
 ################################
@@ -47,10 +48,12 @@ merged_data$NAME
 # Plot the heatmap
 ggplot(data = merged_data) +
   geom_sf(aes(fill = phi_mean)) +  # fill counties based on average_value
-  scale_fill_viridis(option = "A", direction = -1) +  # color scale
+  scale_fill_gradient(low = "white", high = "#3C0091", na.value = "darkgray") + 
   labs(fill = "Mean φ Value",
        main = "New York Counties") +
-  theme_minimal()  # theme
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
 
 hist(merged_data$phi_mean)
 median(merged_data$phi_mean)
