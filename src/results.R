@@ -91,10 +91,18 @@ autocorr.plot(results_base[, "beta[8]", drop = FALSE], ask = FALSE)
 autocorr.plot(results_mixed_1[, "beta[8]", drop = FALSE], ask = FALSE)
 autocorr.plot(results_mixed_2[, "beta[8]", drop = FALSE], ask = FALSE)
 
+# Intercept
+traceplot(results_base[, "beta[9]", drop = FALSE], main = "Trace of intercept, Base")
+traceplot(results_mixed_1[, "beta[9]", drop = FALSE], main = "Trace of intercept, School Effects")
+traceplot(results_mixed_2[, "beta[9]", drop = FALSE], main = "Trace of intercept, School + County Effects")
+autocorr.plot(results_base[, "beta[9]", drop = FALSE], ask = FALSE)
+autocorr.plot(results_mixed_1[, "beta[9]", drop = FALSE], ask = FALSE)
+autocorr.plot(results_mixed_2[, "beta[9]", drop = FALSE], ask = FALSE)
+
 
 # Summary of posterior distributions
 fixed_effects <- c("beta[1]", "beta[2]", "beta[3]", "beta[4]", 
-                   "beta[5]", "beta[6]", "beta[7]", "beta[8]")
+                   "beta[5]", "beta[6]", "beta[7]", "beta[8]", "beta[9]")
 summary(results_base[, fixed_effects, drop = FALSE])
 summary(results_mixed_1[, fixed_effects, drop = FALSE])
 summary(results_mixed_2[, fixed_effects, drop = FALSE])
@@ -120,33 +128,46 @@ gelman.diag(results_mixed_2[, fixed_effects, drop = FALSE])
 # and compare distributions between the two mixed effects models
 
 # Note: there are 825 unique schools
-traceplot(results_mixed_2[, "alpha[42]", drop = FALSE])
-test <- sprintf("alpha[%d]", 401:600)
+combined_samples <- do.call(rbind, results_mixed_1)
 
-# 6, 14, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 41, 48, 49, 55, 56, 57, 59, 61, 62, 69
-candidates <- c(6, 14, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 41, 48, 49, 55, 56, 57, 59, 61, 62, 69)
-school_indices <- c(360000800193, 360002101704, 360007600624, 360007603352, 360007603680, 360007605621, 360007700116
-,360007700585
-,360007700595
-,360007700637
-,360007700649
-,360007700691
-,360007700692
-,360007702871
-,360007705084
-,360007705085
-,360007705622
-,360007705624
-,360007705625
-,360007705764
-,360007705770
-,360007705771
-,360007805113)
+# Prepare a matrix to store the quantiles and the indicator
+alpha_quantiles <- matrix(NA, nrow = 825, ncol = 4)
+colnames(alpha_quantiles) <- c("lwr", "upr", "Zero", "Index")
+
+# Loop over each alpha parameter and calculate quantiles and the indicator
+for (i in 1:825) {
+  # Extract samples for this specific alpha
+  alpha_samples <- combined_samples[, sprintf("alpha[%d]", i)]
+  
+  # Calculate the 2.5% and 97.5% quantiles
+  quantiles <- quantile(alpha_samples, probs = c(0.025, 0.975))
+  
+  # Check if 0 is in the interval
+  zero_in_interval <- as.numeric(quantiles["2.5%"] < 0 & quantiles["97.5%"] > 0)
+  
+  # Store the quantiles and the indicator
+  alpha_quantiles[i, ] <- c(quantiles["2.5%"], quantiles["97.5%"], zero_in_interval, i)
+}
+#identify greatest mean magnitudes 
+as.data.frame(alpha_quantiles) %>% filter(Zero == 0) %>% mutate(absmean = abs((upr + lwr) / 2)) %>% arrange(-absmean)
+
+# BRONX COLLEGIATE ACADEMY (Bronx County): highest mean aphi
+ny %>% filter(ncessch == 360008605669)
+traceplot(results_mixed_1[, "alpha[111]", drop = FALSE], main = "")
+
+# MATTITUCK JUNIOR-SENIOR HIGH SCHOOL (Suffolk County): lowest mean aphi
+ny %>% filter(ncessch == 360002101704)
+traceplot(results_mixed_1[, "alpha[14]", drop = FALSE], main = "")
+
+# Stuyvesant (New York County): aphi = 0, recognizable school
+ny %>% filter(ncessch == 360007702877)
+traceplot(results_mixed_1[, "alpha[42]", drop = FALSE], main = "")
+
 
 ################################
 # 2 - County random effects
 ################################
 
-# TODO: choose which counties to show trace plots for
+# Note: there are 61 unique counties (of 62 actual)
 
-# Note: there are 61 unique counties
+# County phi values were mapped under `county_map.R`
